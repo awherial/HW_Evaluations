@@ -1,4 +1,6 @@
 *.pbi
+*.wsdt
+*.dep
 HW_Evaluations\LINX_Tranceiver\EWARM\Tranceiver\Obj\
 LINX_Tranceiver/EWARM/Tranceiver/Obj/system_stm32l1xx.pbi.xcl
 LINX_Tranceiver/EWARM/Tranceiver/Obj/stm32l1xx_hal_tim.pbi.xcl
@@ -38,3 +40,5 @@ LINX_Tranceiver/EWARM/Tranceiver/Obj/stm32l1xx_hal_gpio.pbi.xcl
 LINX_Tranceiver/EWARM/Tranceiver/Obj/
 LINX_Tranceiver/EWARM/Tranceiver/List/Tranceiver.map
 LINX_Tranceiver/EWARM/Tranceiver/Exe/
+LINX_Tranceiver/EWARM/settings/Project.wsdt
+LINX_Tranceiver/EWARM/Tranceiver.dep

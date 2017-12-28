@@ -65,15 +65,16 @@ static void MX_NVIC_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-uint8_t     rcvd_bytes[32];
+uint8_t     reg_value;
 uint8_t     mydsn_byte[4];
 
 /* USER CODE END 0 */
 
-int main(void)  {
+int main(void)
+{
 
   /* USER CODE BEGIN 1 */
-  uint8_t   result;
+  ERROR_TYPE_E   result;
 
   /* USER CODE END 1 */
 
@@ -101,26 +102,71 @@ int main(void)  {
   MX_NVIC_Init();
 
   /* USER CODE BEGIN 2 */
-    //uint8_t   humpro_read_reg  (uint8_t  reg_addr, uint8_t  * received_bytes)  {
     result = humpro_init ();
-    result = humpro_read_reg    (0x4e, rcvd_bytes);
-    //result = humpro_write_reg   (0x03, 0x01);    //
-    result = humpro_write_reg   (0x4e, 0x05);    //
-    MX_UART5_reInit_baudRate    (115200);   //9600);
+    HAL_Delay (3000);
 
-    //baud rate changed to 115200 at both sides
-    result = humpro_read_reg    (0x4e, rcvd_bytes);
-    result = humpro_write_reg   (0x6e, 0x01);    // received data will be sent when CMD linw is high, will be bufferred until then
-    result = humpro_read_reg    (0x6e, rcvd_bytes);
+//    //baud rate changed to 115200 at both sides
+//    result = humpro_read_reg_addr    (0x6e, &reg_value);
+//    result = humpro_write_reg   (0x6e, 0x01);    // received data will be sent when CMD linw is high, will be bufferred until then
+//    result = humpro_read_reg_addr    (0x6e, &reg_value);
+//
+//    result = humpro_read_reg_addr    (0x34, &reg_value);
+//    mydsn_byte[3] = reg_value;
+//    result = humpro_read_reg_addr    (0x35, &reg_value);
+//    mydsn_byte[2] = reg_value;
+//    result = humpro_read_reg_addr    (0x36, &reg_value);
+//    mydsn_byte[1] = reg_value;
+//    result = humpro_read_reg_addr    (0x37, &reg_value);
+//    mydsn_byte[0] = reg_value;
+//
+//
+//        //uint8_t   humpro_read_reg_addr  (uint8_t  reg_addr, uint8_t  * received_bytes)  {
+//    result = humpro_read_reg_addr    (0x4e, &reg_value);
+//    if (reg_value != 0x05)  {
+//        //result = humpro_write_reg   (0x03, 0x01);    //
+//        result = humpro_write_reg   (0x4e, 0x05);    //
+//        if (result == 0x06)  {
+//            MX_UART5_reInit_baudRate    (115200);   //9600);
+//        }
+//        else    {
+//            //MX_UART5_reInit_baudRate    (9600);
+//        }
+////        result = humpro_read_reg_addr    (0x4e, &reg_value);
+//    }
+//    result = humpro_read_reg_addr    (0x4e, &reg_value);
 
-    result = humpro_read_reg    (0x34, rcvd_bytes);
-    mydsn_byte[3] = rcvd_bytes[2];
-    result = humpro_read_reg    (0x35, rcvd_bytes);
-    mydsn_byte[2] = rcvd_bytes[2];
-    result = humpro_read_reg    (0x36, rcvd_bytes);
-    mydsn_byte[1] = rcvd_bytes[2];
-    result = humpro_read_reg    (0x37, rcvd_bytes);
-    mydsn_byte[0] = rcvd_bytes[2];
+
+    result = humpro_read_reg_id    (CMDHOLD, VOLATILE, &reg_value);
+    result = humpro_write_reg_id   (CMDHOLD, VOLATILE, 0x01);    // received data will be sent when CMD linw is high, will be bufferred until then
+    result = humpro_read_reg_id    (CMDHOLD, VOLATILE, &reg_value);
+
+    result = humpro_read_reg_id    (MYDSN3, VOLATILE, &reg_value);
+    mydsn_byte[3] = reg_value;
+    result = humpro_read_reg_id    (MYDSN2, VOLATILE, &reg_value);
+    mydsn_byte[2] = reg_value;
+    result = humpro_read_reg_id    (MYDSN1, VOLATILE, &reg_value);
+    mydsn_byte[1] = reg_value;
+    result = humpro_read_reg_id    (MYDSN0, VOLATILE, &reg_value);
+    mydsn_byte[0] = reg_value;
+
+
+        //uint8_t   humpro_read_reg_id  (uint8_t  reg_addr, uint8_t  * received_bytes)  {
+    result = humpro_read_reg_id    (UARTBAUD, VOLATILE, &reg_value);
+    if (reg_value != 0x05)  {
+        //result = humpro_write_reg   (0x03, 0x01);    //
+        result = humpro_write_reg_id   (UARTBAUD, VOLATILE, 0x05);    //
+        if (result == HUM_PRO_ACK)  {   //0x06)  {
+            MX_UART5_reInit_baudRate    (115200);   //9600);
+        }
+        else    {
+            //MX_UART5_reInit_baudRate    (9600);
+        }
+//        result = humpro_read_reg_id    (UARTBAUD, &reg_value);
+    }
+    result = humpro_read_reg_id    (UARTBAUD, VOLATILE, &reg_value);
+
+
+    humpro_update_all_regs ();
 
   /* USER CODE END 2 */
 

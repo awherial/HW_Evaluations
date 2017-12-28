@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Project>
-<ProjectName>D:\HW-Evaluatiuons\LORAN\Projects\Tranceiver\\Tranceiver</ProjectName>
+<ProjectName>D:\HW_Evaluations\LINX_Tranceiver\\Tranceiver</ProjectName>
 <CMSIS>..\Drivers\CMSIS</CMSIS>
 <HAL_Driver>C:\Users\abdul_000\STM32Cube\Repository\STM32Cube_FW_L1_V1.8.0\Drivers\CMSIS</HAL_Driver>
 

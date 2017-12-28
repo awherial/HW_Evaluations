@@ -6,7 +6,7 @@
   ******************************************************************************
   ** This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether
+  * USER CODE END. Other portions of this file, whether 
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
@@ -67,7 +67,6 @@ void MX_UART5_Init(void)
 
 }
 
-
 void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
 {
 
@@ -79,10 +78,10 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
   /* USER CODE END UART5_MspInit 0 */
     /* UART5 clock enable */
     __HAL_RCC_UART5_CLK_ENABLE();
-
-    /**UART5 GPIO Configuration
+  
+    /**UART5 GPIO Configuration    
     PC12     ------> UART5_TX
-    PD2     ------> UART5_RX
+    PD2     ------> UART5_RX 
     */
     GPIO_InitStruct.Pin = GPIO_PIN_12;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -117,10 +116,10 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
   /* USER CODE END UART5_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_UART5_CLK_DISABLE();
-
-    /**UART5 GPIO Configuration
+  
+    /**UART5 GPIO Configuration    
     PC12     ------> UART5_TX
-    PD2     ------> UART5_RX
+    PD2     ------> UART5_RX 
     */
     HAL_GPIO_DeInit(GPIOC, GPIO_PIN_12);
 
@@ -132,7 +131,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 
   /* USER CODE END UART5_MspDeInit 1 */
   }
-}
+} 
 
 /* USER CODE BEGIN 1 */
 /* UART5 init function */

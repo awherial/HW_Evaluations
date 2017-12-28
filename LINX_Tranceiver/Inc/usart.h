@@ -62,7 +62,6 @@ extern void _Error_Handler(char *, int);
 void MX_UART5_Init(void);
 void MX_UART5_reInit_baudRate (uint32_t     baud_rate);
 
-
 /* USER CODE BEGIN Prototypes */
 
 /* USER CODE END Prototypes */

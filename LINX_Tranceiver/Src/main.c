@@ -67,6 +67,7 @@ static void MX_NVIC_Init(void);
 /* USER CODE BEGIN 0 */
 uint8_t     reg_value;
 uint8_t     mydsn_byte[4];
+uint8_t     f_humpro_print_regs;
 
 /* USER CODE END 0 */
 
@@ -103,8 +104,17 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
     result = humpro_init ();
-    HAL_Delay (3000);
+    HAL_Delay (300);
+    //humpro_update_all_regs ();
+    humpro_print_regs (VOLATILE);
+    humpro_print_regs (NON_VOL);
 
+    humpro_print_version();
+    humpro_print_address();
+    humpro_print_addrsng_mode ();
+    humpro_print_config ();
+
+/*
 //    //baud rate changed to 115200 at both sides
 //    result = humpro_read_reg_addr    (0x6e, &reg_value);
 //    result = humpro_write_reg   (0x6e, 0x01);    // received data will be sent when CMD linw is high, will be bufferred until then
@@ -134,21 +144,12 @@ int main(void)
 ////        result = humpro_read_reg_addr    (0x4e, &reg_value);
 //    }
 //    result = humpro_read_reg_addr    (0x4e, &reg_value);
+*/
 
 
     result = humpro_read_reg_id    (CMDHOLD, VOLATILE, &reg_value);
     result = humpro_write_reg_id   (CMDHOLD, VOLATILE, 0x01);    // received data will be sent when CMD linw is high, will be bufferred until then
     result = humpro_read_reg_id    (CMDHOLD, VOLATILE, &reg_value);
-
-    result = humpro_read_reg_id    (MYDSN3, VOLATILE, &reg_value);
-    mydsn_byte[3] = reg_value;
-    result = humpro_read_reg_id    (MYDSN2, VOLATILE, &reg_value);
-    mydsn_byte[2] = reg_value;
-    result = humpro_read_reg_id    (MYDSN1, VOLATILE, &reg_value);
-    mydsn_byte[1] = reg_value;
-    result = humpro_read_reg_id    (MYDSN0, VOLATILE, &reg_value);
-    mydsn_byte[0] = reg_value;
-
 
         //uint8_t   humpro_read_reg_id  (uint8_t  reg_addr, uint8_t  * received_bytes)  {
     result = humpro_read_reg_id    (UARTBAUD, VOLATILE, &reg_value);
@@ -165,8 +166,16 @@ int main(void)
     }
     result = humpro_read_reg_id    (UARTBAUD, VOLATILE, &reg_value);
 
+    result = humpro_read_reg_id    (MYDSN3, NON_VOL, &reg_value);
+    mydsn_byte[3] = reg_value;
+    result = humpro_read_reg_id    (MYDSN2, NON_VOL, &reg_value);
+    mydsn_byte[2] = reg_value;
+    result = humpro_read_reg_id    (MYDSN1, NON_VOL, &reg_value);
+    mydsn_byte[1] = reg_value;
+    result = humpro_read_reg_id    (MYDSN0, NON_VOL, &reg_value);
+    mydsn_byte[0] = reg_value;
 
-    humpro_update_all_regs ();
+
 
   /* USER CODE END 2 */
 
@@ -177,11 +186,25 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-
+      if (f_humpro_print_regs)  {
+          f_humpro_print_regs = 0;
+          humpro_print_regs(VOLATILE);
+      }
   }
   /* USER CODE END 3 */
 
 }
+
+
+
+
+
+
+
+
+
+
+
 
 /** System Clock Configuration
 */

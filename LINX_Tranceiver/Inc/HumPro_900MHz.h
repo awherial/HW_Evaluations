@@ -99,7 +99,7 @@ Notice that changes are listed in reverse chronological order.
 /*
 
 |-------------------|------------|-------------|--------|------------------|-------------------------------------------------------|
-|   Name			|	NV Addr	 |   Vol Addr  | R/W	|    Default Value |    Description                                        |
+|        Name       |   NV Addr  |   Vol Addr  |   R/W  |   Default Value  |    Description                                        |
 |-------------------|------------|-------------|--------|------------------|-------------------------------------------------------|
 |   CRCERRS			|            |   0x40	   | R/W	|   0x00	       |    CRC Error Count                                    |
 |   HOPTABLE		|   0x00	 |   0x4B	   | R/W	|   0x00	       |    Channel Hop Table                                  |
@@ -325,6 +325,11 @@ extern const humpro_regs_t  hum_pro_regs[];
 ***/
 ERROR_TYPE_E    humpro_init               (void);
 ERROR_TYPE_E    humpro_update_all_regs    (void);
+void            humpro_print_regs         (MEMORY_TYPE_E mem);
+void            humpro_print_version      (void);
+void            humpro_print_addrsng_mode (void);
+void            humpro_print_address      (void);
+void            humpro_print_config       (void);
 ERROR_TYPE_E    humpro_read_reg_id        (HUMPRO_CONFIG_REG_NAMES_E reg_id, MEMORY_TYPE_E  vol, uint8_t  * value_p);
 ERROR_TYPE_E    humpro_write_reg_id       (HUMPRO_CONFIG_REG_NAMES_E reg_id, MEMORY_TYPE_E  mem, uint8_t      value);
 

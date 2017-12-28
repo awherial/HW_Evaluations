@@ -11,10 +11,10 @@ ByteLimit=50
 [StLinkDriver]
 CStepIntDis=_ 0
 LeaveTargetRunning=_ 0
-stlinkserialNo=67172720
-stlinkfoundProbes=
+stlinkserialNo=87242434
+stlinkfoundProbes=67172720:87242434:
 [DebugChecksum]
-Checksum=-1958445799
+Checksum=-281824327
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -89,11 +89,8 @@ SumSortOrder=0
 [Disassemble mode]
 mode=0
 [Breakpoints2]
-Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Src\main.c}.139.5" 0 0 1 "" 0 "" 0
-Bp1=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Src\main.c}.139.5" 0 0 1 "" 0 "" 0
-Bp2=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Src\main.c}.139.5" 0 0 1 "" 0 "" 0
-Bp3=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Src\main.c}.139.5" 0 0 1 "" 0 "" 0
-Count=4
+Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Src\main.c}.115.5" 0 0 1 "" 0 "" 0
+Count=1
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""

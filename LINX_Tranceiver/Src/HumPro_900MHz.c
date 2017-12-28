@@ -74,6 +74,36 @@ Notice that changes are listed in reverse chronological order.
 uint8_t  nvl_shadow_regs[LAST_REGISTER];
 uint8_t  vol_shadow_regs[LAST_REGISTER];
 
+const char *tx_pwr_text[] = {
+
+    /* 0x00 */ {"-7.7"},
+    /* 0x01 */ {"-7.7"},
+    /* 0x02 */ {" 4.6"},
+    /* 0x03 */ {" 8.3"},
+    /* 0x04 */ {"14.1"},
+    /* 0x05 */ {"20.0"},
+    /* 0x06 */ {"21.7"},
+    /* 0x07 */ {"23.6"},
+    /* 0x08 */ {"25.0"},
+    /* 0x09 */ {"25.0"},
+    /* 0x0a */ {"25.0"},
+
+};
+
+const char *baud_rate_text[] = {
+
+    /* 0x01 */ {"9,600"},
+    /* 0x02 */ {"19,200"},
+    /* 0x03 */ {"38,400"},
+    /* 0x04 */ {"57,600"},
+    /* 0x05 */ {"115,200"},
+    /* 0x06 */ {"10,400"},
+    /* 0x07 */ {"31,250"},
+
+};
+
+
+
 //    const HUMPRO_CONFIG_REG_NAMES_E     reg_name;
 //    const uint8_t                       nvl_addr;
 //    const uint8_t                       vlt_addr;
@@ -290,16 +320,6 @@ ERROR_TYPE_E   humpro_init       (void)   {
     HUMPRO_CHIP_unRESET ();
     humpro_delay_ms     (30);
 
-    HUMPRO_CHIP_RESET   ();
-    humpro_delay_ms     (1);
-    HUMPRO_CHIP_unRESET ();
-    humpro_delay_ms     (30);
-
-    HUMPRO_CHIP_RESET   ();
-    humpro_delay_ms     (1);
-    HUMPRO_CHIP_unRESET ();
-    humpro_delay_ms     (30);
-
     // remove / flush junk if any
     HAL_UART_Receive(&huart5, dummy_byte, 10, 300);
 
@@ -322,6 +342,7 @@ ERROR_TYPE_E   humpro_update_all_regs (void)   {
     HUMPRO_CONFIG_REG_NAMES_E     regs;
     const humpro_regs_t         * rec_p;
 
+
     regs  = FIRST_REGISTER;
     rec_p = hum_pro_regs;
     while (regs < LAST_REGISTER)
@@ -343,6 +364,246 @@ ERROR_TYPE_E   humpro_update_all_regs (void)   {
     }
 
     return  HUM_PRO_SUCCESS;
+}
+
+
+/**
+ * @name    Public function
+ * @brief   visible / can be called in entire project from any file..
+ * @ingroup Global / public
+ *
+ * @param
+ *
+ * @retval TRUE   Successfully did nothing.
+ * @retval FALSE  Oops, did something.
+ *
+ */
+void humpro_print_regs (MEMORY_TYPE_E mem)   {
+
+    ERROR_TYPE_E        result = HUM_PRO_SUCCESS;
+    uint8_t             reg_value;
+    uint8_t             reg_addr;
+    char const        * text_p;
+
+    result = humpro_write_reg_id   (CMDHOLD, VOLATILE, 0x01);    // received data will be sent when CMD linw is high, will be bufferred until then
+    result = humpro_read_reg_id    (CMDHOLD, VOLATILE, &reg_value);
+
+    HUMPRO_CONFIG_REG_NAMES_E     regs;
+    const humpro_regs_t         * rec_p;
+
+
+    // print table header
+//    printf ( "|-------------------|------------|-------------|--------|------------------|-------------------------------------------------------|   \n"\
+//             "|        Name       |   NV Addr  |   Vol Addr  |   R/W  |   Default Value  |    Description                                        |   \n"\
+//             "|-------------------|------------|-------------|--------|------------------|-------------------------------------------------------|   \n"\
+//           );
+    if (mem == VOLATILE)    {
+        printf ( "|-------------|----------|----------------------------------------|   \n"\
+                 "|   Vol Addr  |   Value  |   Description                          |   \n"\
+                 "|-------------|----------|----------------------------------------|   \n"\
+               );
+    }
+    else {
+        printf ( "|-------------|----------|----------------------------------------|   \n"\
+                 "| Non-Vol Addr|   Value  |   Description                          |   \n"\
+                 "|-------------|----------|----------------------------------------|   \n"\
+               );
+    }
+
+    regs  = FIRST_REGISTER;
+    rec_p = hum_pro_regs;
+    while (regs < LAST_REGISTER)
+    {
+        text_p = NULL;
+        if (rec_p->rd_write != WO) {
+            if (mem == VOLATILE)    {
+                humpro_read_reg_addr (rec_p->vlt_addr, rec_p->vlt_reg_p);
+                reg_addr  = rec_p->vlt_addr;
+                reg_value = *rec_p->vlt_reg_p;
+            }
+            else {
+                humpro_read_reg_addr (rec_p->nvl_addr, rec_p->nvl_reg_p);
+                reg_addr  = rec_p->nvl_addr;
+                reg_value = *rec_p->nvl_reg_p;
+            }
+            text_p = rec_p->dscr_text;
+        }
+        else    {
+             // write only registers
+                // nop
+        }
+        rec_p++;
+        regs++;
+
+        // print
+        if (text_p)     {
+            printf ( "|   0x%02x      |  0x%02x    | %s \n", reg_addr, reg_value, text_p);
+        }
+    }
+    printf ("|-------------|----------|----------------------------------------|\n\n");
+
+}
+
+/**
+ * @name    Public function
+ * @brief   visible / can be called in entire project from any file..
+ * @ingroup Global / public
+ *
+ * @param
+ *
+ * @retval TRUE   Successfully did nothing.
+ * @retval FALSE  Oops, did something.
+ *
+ */
+void humpro_print_version (void)    {
+
+    const humpro_regs_t         * rec_p;
+
+
+    printf ("\n\n");
+
+    rec_p = &hum_pro_regs[SHOWVER];
+    printf ("0x%02x : %s\n", *rec_p[0].nvl_reg_p, rec_p[0].dscr_text);
+
+    rec_p = &hum_pro_regs[FWVER3];
+    printf ("0x%02x : %s\n", *rec_p[0].nvl_reg_p, rec_p[0].dscr_text);
+    printf ("0x%02x : %s\n", *rec_p[1].nvl_reg_p, rec_p[1].dscr_text);
+    printf ("0x%02x : %s\n", *rec_p[2].nvl_reg_p, rec_p[2].dscr_text);
+    printf ("0x%02x : %s\n", *rec_p[3].nvl_reg_p, rec_p[3].dscr_text);
+
+}
+
+/**
+ * @name    Public function
+ * @brief   visible / can be called in entire project from any file..
+ * @ingroup Global / public
+ *
+ * @param
+ *
+ * @retval TRUE   Successfully did nothing.
+ * @retval FALSE  Oops, did something.
+ *
+ */
+void humpro_print_addrsng_mode (void)    {
+
+    const humpro_regs_t   * rec_p;
+    uint8_t                 reg_value;
+
+
+    printf ("\n\n");
+
+ // 1. ADDMODE
+    rec_p = &hum_pro_regs[ADDMODE];
+    reg_value = *rec_p[0].nvl_reg_p;
+    printf ("Addressing mode- 0x%02x - %s\n",  \
+            reg_value, rec_p[0].dscr_text);
+    if ( (reg_value & 0x0F) == 0x04 )  {
+        printf ("DSN Addressing mode\n");
+    }
+    else if ( (reg_value & 0x0F) == 0x06 )  {
+        printf ("User Addressing mode\n");
+    }
+    else if ( (reg_value & 0x0F) == 0x07 )  {
+        printf ("Extended User Addressing mode\n");
+    }
+
+}
+
+/**
+ * @name    Public function
+ * @brief   visible / can be called in entire project from any file..
+ * @ingroup Global / public
+ *
+ * @param
+ *
+ * @retval TRUE   Successfully did nothing.
+ * @retval FALSE  Oops, did something.
+ *
+ */
+void humpro_print_address (void)    {
+
+    const humpro_regs_t         * rec_p;
+
+    printf ("\n\n");
+
+ // 1. MYDSN[3-0]
+    rec_p = &hum_pro_regs[MYDSN3];
+    printf ("My DSN address - %02x:%02x:%02x:%02x - %s\n",  \
+            *rec_p[0].nvl_reg_p, *rec_p[1].nvl_reg_p,       \
+            *rec_p[2].nvl_reg_p, *rec_p[3].nvl_reg_p,       \
+            rec_p[0].dscr_text);
+
+ // 2. CUSTID[1-0]
+    rec_p = &hum_pro_regs[CUSTID1];
+    printf ("Customer ID    -       %02x:%02x - %s\n",  \
+            *rec_p[0].nvl_reg_p, *rec_p[1].nvl_reg_p,       \
+            rec_p[0].dscr_text);
+
+ // 3. DESTDSN[3-0]
+    rec_p = &hum_pro_regs[DESTDSN3];
+    printf ("Dest DSN addr  - %02x:%02x:%02x:%02x - %s\n",  \
+            *rec_p[0].nvl_reg_p, *rec_p[1].nvl_reg_p,       \
+            *rec_p[2].nvl_reg_p, *rec_p[3].nvl_reg_p,       \
+            rec_p[0].dscr_text);
+
+ // 4. USRCID[3-0]
+    rec_p = &hum_pro_regs[USRCID3];
+    printf ("User SRC ID    - %02x:%02x:%02x:%02x - %s\n",  \
+            *rec_p[0].nvl_reg_p, *rec_p[1].nvl_reg_p,       \
+            *rec_p[2].nvl_reg_p, *rec_p[3].nvl_reg_p,       \
+            rec_p[0].dscr_text);
+
+ // 5. UDESTID[3-0]
+    rec_p = &hum_pro_regs[UDESTID3];
+    printf ("User DEST ID   - %02x:%02x:%02x:%02x - %s\n",  \
+            *rec_p[0].nvl_reg_p, *rec_p[1].nvl_reg_p,       \
+            *rec_p[2].nvl_reg_p, *rec_p[3].nvl_reg_p,       \
+            rec_p[0].dscr_text);
+
+
+ // 6. UMASK[3-0]
+    rec_p = &hum_pro_regs[UMASK3];
+    printf ("User MASK      - %02x:%02x:%02x:%02x - %s\n",  \
+            *rec_p[0].nvl_reg_p, *rec_p[1].nvl_reg_p,       \
+            *rec_p[2].nvl_reg_p, *rec_p[3].nvl_reg_p,       \
+            rec_p[0].dscr_text);
+
+
+}
+
+/**
+ * @name    Public function
+ * @brief   visible / can be called in entire project from any file..
+ * @ingroup Global / public
+ *
+ * @param
+ *
+ * @retval TRUE   Successfully did nothing.
+ * @retval FALSE  Oops, did something.
+ *
+ */
+void humpro_print_config (void)    {
+
+    humpro_print_addrsng_mode ();
+    const humpro_regs_t         * rec_p;
+
+    printf ("\n\n");
+
+    // tx power
+    rec_p = &hum_pro_regs[TXPWR];
+    printf ("Tx Power  - 0x%02x : %4sdBm - %s\n",                     \
+            *rec_p->nvl_reg_p, tx_pwr_text[*rec_p->nvl_reg_p],  \
+            rec_p->dscr_text);
+
+
+    // baud rate
+    rec_p = &hum_pro_regs[UARTBAUD];
+    printf ("Baud Rate - 0x%02x : %6sbps - %s\n",                      \
+            *rec_p->nvl_reg_p, baud_rate_text[*rec_p->nvl_reg_p - 1],  \
+            rec_p->dscr_text);
+
+
+
 }
 
 /**

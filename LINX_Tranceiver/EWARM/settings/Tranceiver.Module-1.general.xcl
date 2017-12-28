@@ -1,0 +1,15 @@
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5 ST\arm\bin\armproc.dll" 
+
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5 ST\arm\bin\armstlink2.dll" 
+
+"D:\HW_Evaluations\LINX_Tranceiver\EWARM\Module-1\Exe\Tranceiver.out" 
+
+--plugin "C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5 ST\arm\bin\armbat.dll" 
+
+--device_macro "C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5 ST\arm\config\debugger\ST\STM32L1xx.dmac" 
+
+--flash_loader "C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5 ST\arm\config\flashloader\ST\FlashSTM32L15xxE.board" 
+
+
+
+

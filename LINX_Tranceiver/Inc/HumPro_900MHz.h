@@ -323,19 +323,24 @@ extern const humpro_regs_t  hum_pro_regs[];
 /***
  * Exported functions declaration ---------------------------------------------
 ***/
-ERROR_TYPE_E    humpro_init               (void);
-ERROR_TYPE_E    humpro_update_all_regs    (void);
-void            humpro_print_regs         (MEMORY_TYPE_E mem);
-void            humpro_print_version      (void);
-void            humpro_print_addrsng_mode (void);
-void            humpro_print_address      (void);
-void            humpro_print_config       (void);
-ERROR_TYPE_E    humpro_read_reg_id        (HUMPRO_CONFIG_REG_NAMES_E reg_id, MEMORY_TYPE_E  vol, uint8_t  * value_p);
-ERROR_TYPE_E    humpro_write_reg_id       (HUMPRO_CONFIG_REG_NAMES_E reg_id, MEMORY_TYPE_E  mem, uint8_t      value);
+ERROR_TYPE_E    humpro_init                 (void);
+ERROR_TYPE_E    humpro_update_all_regs      (void);
+void            humpro_print_regs           (MEMORY_TYPE_E mem);
+void            humpro_print_version        (void);
+void            humpro_print_addrsng_mode   (void);
+void            humpro_print_address        (void);
+void            humpro_print_config         (void);
+ERROR_TYPE_E    humpro_read_reg_id          (HUMPRO_CONFIG_REG_NAMES_E reg_id, MEMORY_TYPE_E  vol, uint8_t  * value_p);
+ERROR_TYPE_E    humpro_write_reg_id         (HUMPRO_CONFIG_REG_NAMES_E reg_id, MEMORY_TYPE_E  mem, uint8_t      value);
 
-uint8_t   humpro_read_reg_addr      (uint8_t  reg_addr, uint8_t  * const reg_ptr);
-uint8_t   humpro_write_reg_addr     (uint8_t  reg_addr, uint8_t  value);
+uint8_t   humpro_read_reg_addr              (uint8_t  reg_addr, uint8_t  * const reg_ptr);
+uint8_t   humpro_write_reg_addr             (uint8_t  reg_addr, uint8_t  value);
+void      humpro_setup_addresses            (uint8_t * usr_src_id, uint8_t * usr_dst_id);
+void      humpro_change_addressing_mode     (uint8_t  reg_value);
 
+
+uint8_t   humpro_send_data      (uint8_t  * str, uint16_t no_of_bytes);
+uint8_t   humpro_receive_data   (uint8_t  * rcv_ptr, uint16_t  no_of_bytes, uint16_t timeout);
 
 /***
  * Exported Task declaration --------------------------------------------------

@@ -9,7 +9,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * COPYRIGHT(c) 2017 STMicroelectronics
+  * COPYRIGHT(c) 2018 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -45,6 +45,7 @@
 /* USER CODE BEGIN Includes */
 #include "EncodeProCmd.h"
 #include "HumPro_900MHz.h"
+#include "Config_module.h"
 
 /* USER CODE END Includes */
 
@@ -68,6 +69,12 @@ static void MX_NVIC_Init(void);
 uint8_t     reg_value;
 uint8_t     mydsn_byte[4];
 uint8_t     f_humpro_print_regs;
+
+char        transmit_buf[100];
+char        receive_buff[100];
+uint8_t     enable_tx;
+uint16_t    tmp_rcv_delay = 100;
+
 
 /* USER CODE END 0 */
 
@@ -105,56 +112,13 @@ int main(void)
   /* USER CODE BEGIN 2 */
     result = humpro_init ();
     HAL_Delay (300);
-    //humpro_update_all_regs ();
-    humpro_print_regs (VOLATILE);
-    humpro_print_regs (NON_VOL);
-
-    humpro_print_version();
-    humpro_print_address();
-    humpro_print_addrsng_mode ();
-    humpro_print_config ();
-
-/*
-//    //baud rate changed to 115200 at both sides
-//    result = humpro_read_reg_addr    (0x6e, &reg_value);
-//    result = humpro_write_reg   (0x6e, 0x01);    // received data will be sent when CMD linw is high, will be bufferred until then
-//    result = humpro_read_reg_addr    (0x6e, &reg_value);
-//
-//    result = humpro_read_reg_addr    (0x34, &reg_value);
-//    mydsn_byte[3] = reg_value;
-//    result = humpro_read_reg_addr    (0x35, &reg_value);
-//    mydsn_byte[2] = reg_value;
-//    result = humpro_read_reg_addr    (0x36, &reg_value);
-//    mydsn_byte[1] = reg_value;
-//    result = humpro_read_reg_addr    (0x37, &reg_value);
-//    mydsn_byte[0] = reg_value;
-//
-//
-//        //uint8_t   humpro_read_reg_addr  (uint8_t  reg_addr, uint8_t  * received_bytes)  {
-//    result = humpro_read_reg_addr    (0x4e, &reg_value);
-//    if (reg_value != 0x05)  {
-//        //result = humpro_write_reg   (0x03, 0x01);    //
-//        result = humpro_write_reg   (0x4e, 0x05);    //
-//        if (result == 0x06)  {
-//            MX_UART5_reInit_baudRate    (115200);   //9600);
-//        }
-//        else    {
-//            //MX_UART5_reInit_baudRate    (9600);
-//        }
-////        result = humpro_read_reg_addr    (0x4e, &reg_value);
-//    }
-//    result = humpro_read_reg_addr    (0x4e, &reg_value);
-*/
 
 
-    result = humpro_read_reg_id    (CMDHOLD, VOLATILE, &reg_value);
-    result = humpro_write_reg_id   (CMDHOLD, VOLATILE, 0x01);    // received data will be sent when CMD linw is high, will be bufferred until then
-    result = humpro_read_reg_id    (CMDHOLD, VOLATILE, &reg_value);
+#if 0
 
-        //uint8_t   humpro_read_reg_id  (uint8_t  reg_addr, uint8_t  * received_bytes)  {
+    //uint8_t   humpro_read_reg_id  (uint8_t  reg_addr, uint8_t  * received_bytes)  {
     result = humpro_read_reg_id    (UARTBAUD, VOLATILE, &reg_value);
     if (reg_value != 0x05)  {
-        //result = humpro_write_reg   (0x03, 0x01);    //
         result = humpro_write_reg_id   (UARTBAUD, VOLATILE, 0x05);    //
         if (result == HUM_PRO_ACK)  {   //0x06)  {
             MX_UART5_reInit_baudRate    (115200);   //9600);
@@ -162,9 +126,9 @@ int main(void)
         else    {
             //MX_UART5_reInit_baudRate    (9600);
         }
-//        result = humpro_read_reg_id    (UARTBAUD, &reg_value);
     }
     result = humpro_read_reg_id    (UARTBAUD, VOLATILE, &reg_value);
+#endif
 
     result = humpro_read_reg_id    (MYDSN3, NON_VOL, &reg_value);
     mydsn_byte[3] = reg_value;
@@ -177,10 +141,38 @@ int main(void)
 
 
 
+//--- Transmit / Receive check -----------------------------------------------------------
+
+    humpro_setup_addresses (USRCID, UDESTID);
+
+//    humpro_change_addressing_mode (0x04);
+    humpro_change_addressing_mode (0x07);
+
+
+    humpro_update_all_regs ();
+
+    humpro_print_regs (VOLATILE);
+    humpro_print_regs (NON_VOL);
+
+    humpro_print_version();
+    humpro_print_address();
+    humpro_print_addrsng_mode ();
+    humpro_print_config ();
+
+
+
+
+//-----------------------------------------------------------------------------------------
+
+
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  char count = 0;
+
   while (1)
   {
   /* USER CODE END WHILE */
@@ -188,23 +180,30 @@ int main(void)
   /* USER CODE BEGIN 3 */
       if (f_humpro_print_regs)  {
           f_humpro_print_regs = 0;
+          humpro_update_all_regs ();
           humpro_print_regs(VOLATILE);
+          humpro_print_regs(NON_VOL);
+      }
+
+      if (enable_tx)    {
+          HAL_Delay (1000);
+          //sprintf (transmit_buf, "%s : %3d", module_id, count);
+          sprintf (transmit_buf, "%s:%3d", module_id, count);
+
+          humpro_send_data (transmit_buf, strlen(transmit_buf));
+          printf ("Tx: %s\n", transmit_buf);
+          count++;
+      }
+      else {
+          //uint8_t   humpro_receive_data  (uint8_t  * rcv_ptr, uint16_t  no_of_bytes, uint16_t timeout)  {
+          //humpro_receive_data  (receive_buff, strlen(transmit_buf), 1000);
+          humpro_receive_data  (receive_buff, 6, tmp_rcv_delay);
+          printf ("Rx: .. %s\n", receive_buff);
       }
   }
   /* USER CODE END 3 */
 
 }
-
-
-
-
-
-
-
-
-
-
-
 
 /** System Clock Configuration
 */

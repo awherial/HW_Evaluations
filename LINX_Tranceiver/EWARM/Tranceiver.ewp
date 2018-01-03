@@ -1002,7 +1002,7 @@
         </option>
         <option>
           <name>Input description</name>
-          <state></state>
+          <state>Full formatting.</state>
         </option>
         <option>
           <name>Output variant</name>
@@ -1011,7 +1011,7 @@
         </option>
         <option>
           <name>Output description</name>
-          <state></state>
+          <state>Full formatting.</state>
         </option>
         <option>
           <name>GOutputBinary</name>
@@ -1151,6 +1151,7 @@
           <name>CCDefines</name>
           <state>USE_HAL_DRIVER</state>
           <state>STM32L152xE</state>
+          <state>UART_POLLING</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -1966,7 +1967,7 @@
         </option>
         <option>
           <name>Input description</name>
-          <state></state>
+          <state>Full formatting.</state>
         </option>
         <option>
           <name>Output variant</name>
@@ -1975,7 +1976,7 @@
         </option>
         <option>
           <name>Output description</name>
-          <state></state>
+          <state>Full formatting.</state>
         </option>
         <option>
           <name>GOutputBinary</name>
@@ -2115,6 +2116,7 @@
           <name>CCDefines</name>
           <state>USE_HAL_DRIVER</state>
           <state>STM32L152xE</state>
+          <state>UART_POLLING</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -2950,6 +2952,12 @@
       <name>CMSIS</name>
       <file>
         <name>$PROJ_DIR$\..\Src\system_stm32l1xx.c</name>
+      </file>
+    </group>
+    <group>
+      <name>MyLib</name>
+      <file>
+        <name>$PROJ_DIR$\..\Src\cbuf.c</name>
       </file>
     </group>
     <group>

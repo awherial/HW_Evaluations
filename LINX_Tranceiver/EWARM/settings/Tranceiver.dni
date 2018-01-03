@@ -14,7 +14,7 @@ LeaveTargetRunning=_ 0
 stlinkserialNo=87242434
 stlinkfoundProbes=67172720:87242434:
 [DebugChecksum]
-Checksum=-281824327
+Checksum=493883679
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -89,7 +89,7 @@ SumSortOrder=0
 [Disassemble mode]
 mode=0
 [Breakpoints2]
-Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Src\main.c}.115.5" 0 0 1 "" 0 "" 0
+Bp0=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\Src\stm32l1xx_it.c}.132.1" 0 0 1 "" 0 "" 0
 Count=1
 [Log file]
 LoggingEnabled=_ 0

@@ -58,7 +58,7 @@ Notice that changes are listed in reverse chronological order.
 /***
  * Project Library Includes ---------------------------------------------------
 ***/
-//#include "Config_module_2.h"
+#include "Config_module.h"
 
 
 /***
@@ -70,6 +70,10 @@ Notice that changes are listed in reverse chronological order.
 /***
  * Global Variables Defination ------------------------------------------------
 ***/
+uint8_t     USRCID [4] = {0xFF, 0xFF, 0xFF, 0x02};
+uint8_t     UDESTID[4] = {0xFF, 0xFF, 0xFF, 0x01};
+
+uint8_t     module_id[] = "m2";//"humpro-900:02";
 
 /* Private [static] - File Specific */
 /* Private Structures ---------------------------------------------------------

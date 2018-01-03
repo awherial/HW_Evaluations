@@ -71,6 +71,8 @@ Notice that changes are listed in reverse chronological order.
 /***
  * Global Variables Defination ------------------------------------------------
 ***/
+uint8_t  f_reception_complete;
+
 uint8_t  nvl_shadow_regs[LAST_REGISTER];
 uint8_t  vol_shadow_regs[LAST_REGISTER];
 
@@ -266,12 +268,20 @@ void humpro_delay_ms (uint32_t     delay)  {
  *    example_nada(3); // Do nothing 3 times.
  * @endcode
  */
+uint8_t     dummy_bytes[10];
 void flush_uart_rcv_channel (UART_HandleTypeDef *huart)     {
 
-    uint8_t     dummy_bytes[10];
-
+#if UART_POLLING
     //HAL_StatusTypeDef HAL_UART_Receive(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout)
-    HAL_UART_Receive(&huart5, dummy_bytes, 10, 100);
+    HAL_UART_Receive(huart, dummy_bytes, 10, 100);
+
+#else
+    f_reception_complete = 0;
+    //HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size)
+    HAL_UART_Receive_IT(huart, dummy_bytes, 10);
+    while (f_reception_complete == 0)
+        ;
+#endif
 
 }
 
@@ -306,9 +316,9 @@ void flush_uart_rcv_channel (UART_HandleTypeDef *huart)     {
 */
 ERROR_TYPE_E   humpro_init       (void)   {
 
-    uint8_t     dummy_byte[10];
-
-    //uint32_t    *temp_ptr = (uint32_t*)hum_pro_regs;
+    uint8_t             dummy_byte[10];
+    ERROR_TYPE_E        result = HUM_PRO_SUCCESS;
+    uint8_t             reg_value;
 
     HUMPRO_POWER_DOWN   ();
     humpro_delay_ms     (10);
@@ -320,8 +330,14 @@ ERROR_TYPE_E   humpro_init       (void)   {
     HUMPRO_CHIP_unRESET ();
     humpro_delay_ms     (30);
 
+    flush_uart_rcv_channel (&huart5);
+
+    result = humpro_read_reg_id    (CMDHOLD, VOLATILE, &reg_value);
+    result = humpro_write_reg_id   (CMDHOLD, VOLATILE, 0x01);    // received data will be sent when CMD linw is high, will be bufferred until then
+    result = humpro_read_reg_id    (CMDHOLD, VOLATILE, &reg_value);
+
     // remove / flush junk if any
-    HAL_UART_Receive(&huart5, dummy_byte, 10, 300);
+    //HAL_UART_Receive(&huart5, dummy_byte, 10, 300);
 
     return  HUM_PRO_SUCCESS;
 }
@@ -494,7 +510,7 @@ void humpro_print_addrsng_mode (void)    {
 
  // 1. ADDMODE
     rec_p = &hum_pro_regs[ADDMODE];
-    reg_value = *rec_p[0].nvl_reg_p;
+    reg_value = *rec_p[0].vlt_reg_p;
     printf ("Addressing mode- 0x%02x - %s\n",  \
             reg_value, rec_p[0].dscr_text);
     if ( (reg_value & 0x0F) == 0x04 )  {
@@ -592,14 +608,14 @@ void humpro_print_config (void)    {
     // tx power
     rec_p = &hum_pro_regs[TXPWR];
     printf ("Tx Power  - 0x%02x : %4sdBm - %s\n",                     \
-            *rec_p->nvl_reg_p, tx_pwr_text[*rec_p->nvl_reg_p],  \
+            *rec_p->vlt_reg_p, tx_pwr_text[*rec_p->vlt_reg_p],  \
             rec_p->dscr_text);
 
 
     // baud rate
     rec_p = &hum_pro_regs[UARTBAUD];
     printf ("Baud Rate - 0x%02x : %6sbps - %s\n",                      \
-            *rec_p->nvl_reg_p, baud_rate_text[*rec_p->nvl_reg_p - 1],  \
+            *rec_p->vlt_reg_p, baud_rate_text[*rec_p->vlt_reg_p - 1],  \
             rec_p->dscr_text);
 
 
@@ -650,7 +666,9 @@ ERROR_TYPE_E   humpro_read_reg_id (HUMPRO_CONFIG_REG_NAMES_E reg_id, MEMORY_TYPE
         return HUM_PRO_INVALID_READ_ACCESS;         // invalid read access
     }
 
+    //HUMPRO_nCOMMAND_LINE (LOW);
     result = (ERROR_TYPE_E)humpro_read_reg_addr (reg_addr, value_p);
+   // HUMPRO_nCOMMAND_LINE (HIGH);
 
     if (result == HUM_PRO_ACK)  {
         *register_p = *value_p;     // updating shadow register
@@ -707,11 +725,15 @@ ERROR_TYPE_E   humpro_write_reg_id (HUMPRO_CONFIG_REG_NAMES_E reg_id, MEMORY_TYP
 
 
     if (vol_reg_addr != NILL)   {
+        //HUMPRO_nCOMMAND_LINE (LOW);
         result |= (ERROR_TYPE_E)humpro_write_reg_addr (vol_reg_addr, value);
+        //HUMPRO_nCOMMAND_LINE (HIGH);
         // no shadow reg-update
     }
     if (nvl_reg_addr != NILL)   {
+        //HUMPRO_nCOMMAND_LINE (LOW);
         result |= (ERROR_TYPE_E)humpro_write_reg_addr (nvl_reg_addr, value);
+        //HUMPRO_nCOMMAND_LINE (HIGH);
         // no shadow reg-update
     }
 
@@ -758,14 +780,16 @@ Response :
     ACK     Address  Value
     0x06    REG       V
 */
-uint8_t     test_counter1, test_counter2;
+uint16_t        test_counter1, test_counter2;
+uint8_t         send_bytes[10];
+uint8_t         received_bytes[10];
 
 uint8_t   humpro_read_reg_addr  (uint8_t  reg_addr, uint8_t  * const reg_ptr)  {
 
     // todo -- use sample code logic provided
 
-    uint8_t     send_bytes[5];
-    uint8_t     received_bytes[5];
+//    uint8_t     send_bytes[5];
+//    uint8_t     received_bytes[5];
 
 
     HUMPRO_nCOMMAND_LINE (LOW);
@@ -789,16 +813,28 @@ uint8_t   humpro_read_reg_addr  (uint8_t  reg_addr, uint8_t  * const reg_ptr)  {
         test_counter1++;
 
     //HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout)
-    HAL_UART_Transmit(&huart5, send_bytes, 2 + send_bytes[1], 1000);
+    HAL_UART_Transmit(&huart5, send_bytes, 2 + send_bytes[1], 100);
 
     // receive response ..
         // wait @ 5 msecs for volatile R/W & 31.5 msecs for non-volatile update
     while (!HUMPRO_nCmdResponse())          // keep waiting as module is busy
         test_counter2++;
 
-    //humpro_delay_ms (3);
+//    humpro_delay_ms (3);
     //HAL_StatusTypeDef HAL_UART_Receive(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout)
-    HAL_UART_Receive(&huart5, received_bytes, 3, 1000);
+//    HAL_UART_Receive(&huart5, received_bytes, 5, 100);
+#if UART_POLLING
+    //HAL_StatusTypeDef HAL_UART_Receive(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout)
+    HAL_UART_Receive(&huart5, received_bytes, 3, 100);
+
+#else
+    f_reception_complete = 0;
+    //HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size)
+    HAL_UART_Receive_IT(&huart5, received_bytes, 3);
+    while (f_reception_complete == 0)
+        ;
+#endif
+
 
     if ( (received_bytes[0] == 0x06)  &&  (received_bytes[1] == reg_addr))  {   // ACK ?  && Address ?
         *reg_ptr = received_bytes[2];
@@ -855,14 +891,15 @@ Example:
     FF 03 FE 03 01
 */
 
-uint8_t     test_counter3, test_counter4;
+uint16_t        test_counter3, test_counter4;
+uint8_t         temp_count = 0;//3;
 
 uint8_t   humpro_write_reg_addr  (uint8_t  reg_addr, uint8_t  reg_value)  {
 
     // todo -- use sample code logic provided
 
-    uint8_t     send_bytes[6];
-    uint8_t     received_bytes[3];
+//    uint8_t     send_bytes[6];
+//    uint8_t     received_bytes[3];
     uint8_t     index;
 
 
@@ -895,19 +932,29 @@ uint8_t   humpro_write_reg_addr  (uint8_t  reg_addr, uint8_t  reg_value)  {
     while (!HUMPRO_nClearToSend())          // keep waiting as module is busy
         test_counter3++;
 
-    flush_uart_rcv_channel (&huart5);
+//    flush_uart_rcv_channel (&huart5);
 
     //HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout)
-    HAL_UART_Transmit(&huart5, send_bytes, 2 + send_bytes[1], 1000);
+    HAL_UART_Transmit(&huart5, send_bytes, 2 + send_bytes[1], 100);
 
-    //humpro_delay_ms (3);
 
     // receive response ..
     while (!HUMPRO_nCmdResponse())          // keep waiting as module is busy
         test_counter4++;
     //HAL_StatusTypeDef HAL_UART_Receive(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout)
-    HAL_UART_Receive(&huart5, received_bytes, 1, 1000);
+//    HAL_UART_Receive(&huart5, received_bytes, 5, 1000);
+#if UART_POLLING
+    //HAL_StatusTypeDef HAL_UART_Receive(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout)
+    HAL_UART_Receive(&huart5, received_bytes, 3, 100);
 
+#else
+    f_reception_complete = 0;
+    //HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size)
+    HAL_UART_Receive_IT(&huart5, received_bytes, 3);
+    while (f_reception_complete == 0)
+        ;
+#endif
+//    humpro_delay_ms (3);
     HUMPRO_nCOMMAND_LINE (HIGH);
 
 
@@ -928,6 +975,126 @@ uint8_t   humpro_write_reg_addr  (uint8_t  reg_addr, uint8_t  reg_value)  {
  * @retval FALSE  Oops, did something.
  *
  */
+void humpro_setup_addresses (uint8_t * usr_src_id, uint8_t * usr_dst_id) {
+
+ // user ID
+    humpro_write_reg_id (USRCID0, VOLATILE, usr_src_id[3]);
+    humpro_write_reg_id (USRCID1, VOLATILE, usr_src_id[2]);
+    humpro_write_reg_id (USRCID2, VOLATILE, usr_src_id[1]);
+    humpro_write_reg_id (USRCID3, VOLATILE, usr_src_id[0]);
+
+    humpro_write_reg_id (USRCID0, NON_VOL , usr_src_id[3]);
+    humpro_write_reg_id (USRCID1, NON_VOL , usr_src_id[2]);
+    humpro_write_reg_id (USRCID2, NON_VOL , usr_src_id[1]);
+    humpro_write_reg_id (USRCID3, NON_VOL , usr_src_id[0]);
+
+ // dest ID
+    humpro_write_reg_id (UDESTID0, VOLATILE, usr_dst_id[3]);
+    humpro_write_reg_id (UDESTID1, VOLATILE, usr_dst_id[2]);
+    humpro_write_reg_id (UDESTID2, VOLATILE, usr_dst_id[1]);
+    humpro_write_reg_id (UDESTID3, VOLATILE, usr_dst_id[0]);
+
+    humpro_write_reg_id (UDESTID0, NON_VOL , usr_dst_id[3]);
+    humpro_write_reg_id (UDESTID1, NON_VOL , usr_dst_id[2]);
+    humpro_write_reg_id (UDESTID2, NON_VOL , usr_dst_id[1]);
+    humpro_write_reg_id (UDESTID3, NON_VOL , usr_dst_id[0]);
+
+
+}
+
+/**
+ * @name    Public function
+ * @brief   visible / can be called in entire project from any file..
+ * @ingroup Global / public
+ *
+ * @param
+ *
+ * @retval TRUE   Successfully did nothing.
+ * @retval FALSE  Oops, did something.
+ *
+ */
+void humpro_change_addressing_mode (uint8_t  reg_value) {
+
+    humpro_write_reg_id (ADDMODE, VOLATILE, reg_value);
+    humpro_write_reg_id (ADDMODE, NON_VOL , reg_value);
+
+}
+
+/**
+ * @name    Public function
+ * @brief   visible / can be called in entire project from any file..
+ * @ingroup Global / public
+ *
+ * @param
+ *
+ * @retval TRUE   Successfully did nothing.
+ * @retval FALSE  Oops, did something.
+ *
+ */
+/**
+  * @brief  Rx Transfer completed callbacks.
+  * @param  huart: Pointer to a UART_HandleTypeDef structure that contains
+  *                the configuration information for the specified UART module.
+  * @retval None
+  */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+
+        f_reception_complete = 1;
+
+}
+
+
+/**
+ * @name    Public function
+ * @brief   visible / can be called in entire project from any file..
+ * @ingroup Global / public
+ *
+ * @param
+ *
+ * @retval TRUE   Successfully did nothing.
+ * @retval FALSE  Oops, did something.
+ *
+ */
+uint8_t   humpro_send_data  (uint8_t  * str, uint16_t no_of_bytes)  {
+
+
+    HUMPRO_nCOMMAND_LINE (HIGH);
+
+    //HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout)
+    HAL_UART_Transmit(&huart5, str,  no_of_bytes, 100);
+
+
+    // receive ack (if enabled) ..
+
+    HUMPRO_nCOMMAND_LINE (LOW);
+
+
+    return  0;  //
+
+
+}
+
+/**
+ * @name    Public function
+ * @brief   visible / can be called in entire project from any file..
+ * @ingroup Global / public
+ *
+ * @param
+ *
+ * @retval TRUE   Successfully did nothing.
+ * @retval FALSE  Oops, did something.
+ *
+ */
+uint8_t   humpro_receive_data  (uint8_t  * rcv_ptr, uint16_t  no_of_bytes, uint16_t timeout)  {
+
+
+    HAL_UART_Receive(&huart5, rcv_ptr, no_of_bytes, timeout);
+
+
+    return  0;  //
+
+
+}
 
 
 
@@ -943,6 +1110,18 @@ uint8_t   humpro_write_reg_addr  (uint8_t  reg_addr, uint8_t  reg_value)  {
  *
  */
 
+
+/**
+ * @name    Public function
+ * @brief   visible / can be called in entire project from any file..
+ * @ingroup Global / public
+ *
+ * @param
+ *
+ * @retval TRUE   Successfully did nothing.
+ * @retval FALSE  Oops, did something.
+ *
+ */
 
 
 /***
